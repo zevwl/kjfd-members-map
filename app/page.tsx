@@ -1,6 +1,7 @@
 import React from 'react';
-import FireMap from '../components/map/FireMap';
-import { Member, MemberRole, ActivityStatus } from '../types';
+import Link from 'next/link';
+import FireMap from '@/components/map/FireMap';
+import { Member, MemberRole, ActivityStatus } from '@/types';
 
 // Mock data for initial UI development
 // This will eventually be replaced by a database fetch
@@ -37,15 +38,42 @@ const mockMembers: Member[] = [
 
 export default function Home() {
   return (
-    <main className="flex h-screen w-screen flex-col">
-      {/* Header / Nav could go here */}
-      <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded shadow-lg backdrop-blur-sm">
-        <h1 className="text-xl font-bold text-brand-dark">FD Response Map</h1>
-      </div>
+    <div className="flex flex-col h-screen w-screen bg-gray-50">
+      {/* Header */}
+      <header className="flex-none h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shadow-sm z-10">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-brand-red text-sm font-bold text-white shadow-sm ring-1 ring-white">
+            FD
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">FD Response Map</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-gray-600 transition-colors hover:text-brand-red"
+          >
+            Log in
+          </Link>
+          <Link
+            href="/signup"
+            className="rounded-md bg-brand-red px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2"
+          >
+            Sign up
+          </Link>
+        </div>
+      </header>
 
-      <div className="flex-1 w-full h-full relative">
-        <FireMap members={mockMembers} />
-      </div>
-    </main>
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 overflow-hidden">
+        <div className="h-full w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md relative">
+          <FireMap members={mockMembers} />
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="flex-none py-3 text-center text-xs text-gray-500 bg-white border-t border-gray-200">
+        &copy; {new Date().getFullYear()} Fire Department Response System. All rights reserved.
+      </footer>
+    </div>
   );
 }
