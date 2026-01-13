@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActivityStatus {
+  LOW
+  REGULAR
+}
+
+enum MemberRole {
+  CHIEF
+  ASSISTANT_CHIEF
+  DEPUTY_CHIEF
+  FULL_MEMBER
+  DUTY_CREW
+  PROBATIONARY
+  LIFE
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   // Optional for invited users until they accept
+  role          UserRole? // Null if not approved yet
+
+
+  // Relation to a specific Member profile
+  member       Member?   @relation(fields: [memberId], references: [id])
+  memberId     String?   @unique
+
+  // Approval Tracking (Self-relation to User)
+  approvedBy   User?     @relation("UserApprovals", fields: [approvedById], references: [id])
+  approvedById String?
+
+  // Users that *this* user has approved
+  approvedUsers User[]   @relation("UserApprovals")
+
+  approvedAt   DateTime?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Member {
+  id                String          @id @default(uuid())
+  firstName         String
+  lastName          String
+  fdIdNumber        String          @unique
+  homePhone         String?
+  cellPhone         String
+
+  // Structured Address
+  addressLine1      String
+  addressLine2      String?
+  city              String
+  state             String
+  zipCode           String
+
+  // Geocoded Location (Calculated from above fields)
+  lat               Float?
+  lng               Float?
+
+  status            ActivityStatus
+  role              MemberRole
+  isInShabbosSystem Boolean         @default(false)
+
+  // Relations
+  qualifications    Qualification[]
+  user              User?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+
+model Qualification {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g. "Ladder Truck Driver", "CPR"
+  members   Member[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

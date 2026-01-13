@@ -1,65 +1,51 @@
-import Image from "next/image";
+import React from 'react';
+import FireMap from '../components/map/FireMap';
+import { Member, MemberRole, ActivityStatus } from '../types';
+
+// Mock data for initial UI development
+// This will eventually be replaced by a database fetch
+const mockMembers: Member[] = [
+  {
+    id: '1',
+    firstName: 'John',
+    lastName: 'Doe',
+    fdIdNumber: '101',
+    cellPhone: '555-0101',
+    addressLine1: '123 Main St',
+    city: 'Spring Valley',
+    state: 'NY',
+    location: { lat: 41.147, lng: -74.043 },
+    status: ActivityStatus.REGULAR,
+    role: MemberRole.CHIEF,
+    qualifications: ['Ladder Driver', 'Interior'],
+  },
+  {
+    id: '2',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    fdIdNumber: '205',
+    cellPhone: '555-0202',
+    addressLine1: '456 Oak Ave',
+    city: 'Monsey',
+    state: 'NY',
+    location: { lat: 41.150, lng: -74.060 },
+    status: ActivityStatus.REGULAR,
+    role: MemberRole.FULL_MEMBER,
+    qualifications: ['EMT', 'Pump Operator'],
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="flex h-screen w-screen flex-col">
+      {/* Header / Nav could go here */}
+      <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded shadow-lg backdrop-blur-sm">
+        <h1 className="text-xl font-bold text-brand-dark">FD Response Map</h1>
+      </div>
+
+      <div className="flex-1 w-full h-full relative">
+        <FireMap members={mockMembers} />
+      </div>
+    </main>
   );
 }
