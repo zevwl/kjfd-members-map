@@ -10,8 +10,8 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-  lat: 41.147, // Default placeholder (e.g. Monsey/Spring Valley area)
-  lng: -74.043,
+  lat: 41.340992, // Default placeholder (12 Garfield Rd)
+  lng: -74.168008,
 };
 
 // Helper to determine pin color
