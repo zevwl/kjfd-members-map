@@ -1,12 +1,9 @@
 import { defineConfig } from '@prisma/config';
 import 'dotenv/config';
 
-const url = process.env.DATABASE_URL;
-
-if (!url) {
-  // Config files run in the CLI context, so we can throw or warn
-  throw new Error('DATABASE_URL is not set in environment variables.');
-}
+// Use a fallback to allow 'prisma generate' to run in build environments (like Vercel)
+// where the real DB connection might not be available during the build phase.
+const url = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
 
 export default defineConfig({
   datasource: {
