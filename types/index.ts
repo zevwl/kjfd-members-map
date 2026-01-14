@@ -1,5 +1,5 @@
 // Frontend type definitions mirroring Prisma schema where needed
-// This ensures strict typing across components
+// This ensures strict typing across components without bundling Prisma client
 
 export enum ActivityStatus {
   LOW = 'LOW',
@@ -14,6 +14,12 @@ export enum MemberRole {
   PROBATIONARY = 'PROBATIONARY',
   LIFE = 'LIFE',
   DUTY_CREW = 'DUTY_CREW',
+}
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  MEMBER = 'MEMBER',
 }
 
 export interface GeoLocation {

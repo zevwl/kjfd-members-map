@@ -41,7 +41,7 @@ export default function FireMap({ members }: FireMapProps) {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
   });
 
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [, setMap] = useState<google.maps.Map | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
@@ -90,7 +90,7 @@ export default function FireMap({ members }: FireMapProps) {
           position={selectedMember.location}
           onCloseClick={() => setSelectedMember(null)}
         >
-          <div className="p-2 min-w-[200px]">
+          <div className="p-2 min-w-50">
             <h3 className="font-bold text-lg border-b pb-1 mb-2">
               {selectedMember.firstName} {selectedMember.lastName}
             </h3>
