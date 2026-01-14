@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
-import { Member, MemberRole } from '../../types';
+import { Member, MemberRole } from '@/types';
 
 const containerStyle = {
   width: '100%',
@@ -10,32 +10,20 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-  lat: 41.340992, // Default placeholder (12 Garfield Rd)
+  lat: 41.340992,
   lng: -74.168008,
 };
 
-// Helper to determine pin color
-const getPinColor = (role: MemberRole): string => {
-  switch (role) {
-    case MemberRole.CHIEF:
-    case MemberRole.ASSISTANT_CHIEF:
-    case MemberRole.DEPUTY_CHIEF:
-      return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'; // White/Distinct (Using standard for now, custom SVG later)
-    case MemberRole.FULL_MEMBER:
-    case MemberRole.LIFE:
-      return 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
-    case MemberRole.PROBATIONARY:
-      return 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
-    default:
-      return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
-  }
-};
+// SVG Path for a Fire Helmet (Side Profile View)
+// Facing Right: Long rear brim on left, Shield holder on right
+const HELMET_SVG_PATH = "M22,15 L21,15 L21,10 C19.5,7.5 17,6 14,6 C9,6 5,10 5,15 L1,15 L1,17 L22,17 Z";
 
 interface FireMapProps {
   members: Member[];
+  enablePopups?: boolean;
 }
 
-export default function FireMap({ members }: FireMapProps) {
+export default function FireMap({ members, enablePopups = false }: FireMapProps) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
@@ -60,7 +48,52 @@ export default function FireMap({ members }: FireMapProps) {
     setMap(null);
   }, []);
 
-  if (!isLoaded) return <div className="h-full w-full flex items-center justify-center">Loading Map...</div>;
+  // Defined inside component to access window.google safely after load
+  const getPinIcon = useCallback((role: MemberRole): google.maps.Symbol | undefined => {
+    // Safety check to prevent errors during SSR or before load
+    if (typeof window === 'undefined' || !window.google) return undefined;
+
+    let fillColor = '#ef4444'; // default red-500
+    const strokeColor = '#000000'; // Black outline for contrast
+
+    switch (role) {
+      case MemberRole.CHIEF:
+      case MemberRole.ASSISTANT_CHIEF:
+      case MemberRole.DEPUTY_CHIEF:
+        fillColor = '#FFFFFF'; // White
+        break;
+      case MemberRole.FULL_MEMBER:
+      case MemberRole.LIFE:
+        fillColor = '#FFD700'; // Gold/Yellow
+        break;
+      case MemberRole.PROBATIONARY:
+        fillColor = '#60A5FA'; // Blue
+        break;
+      default:
+        fillColor = '#ef4444';
+    }
+
+    return {
+      path: HELMET_SVG_PATH,
+      fillColor: fillColor,
+      fillOpacity: 1,
+      strokeWeight: 1,
+      strokeColor: strokeColor,
+      scale: 1.5,
+      // Anchor the pin at the bottom center of the helmet (x=12, y=17)
+      anchor: new window.google.maps.Point(12, 17),
+      // Position label text in the visual center of the helmet dome
+      labelOrigin: new window.google.maps.Point(12, 12),
+    };
+  }, []);
+
+  const handleMarkerClick = (member: Member) => {
+    if (enablePopups) {
+      setSelectedMember(member);
+    }
+  };
+
+  if (!isLoaded) return <div className="h-full w-full flex items-center justify-center bg-gray-50 text-gray-500">Loading Map...</div>;
 
   return (
     <GoogleMap
@@ -73,6 +106,13 @@ export default function FireMap({ members }: FireMapProps) {
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }],
+          },
+        ],
       }}
     >
       {members.map((member) => (
@@ -80,8 +120,16 @@ export default function FireMap({ members }: FireMapProps) {
           key={member.id}
           position={member.location}
           title={`${member.firstName} ${member.lastName}`}
-          icon={getPinColor(member.role)}
-          onClick={() => setSelectedMember(member)}
+          icon={getPinIcon(member.role)}
+          label={{
+            text: member.fdIdNumber,
+            color: '#000000',
+            fontSize: '9px',
+            fontWeight: 'bold',
+          }}
+          onClick={() => handleMarkerClick(member)}
+          // Set clickable to false visually for users who can't interact, though onClick guard handles logic
+          clickable={enablePopups}
         />
       ))}
 
@@ -89,19 +137,34 @@ export default function FireMap({ members }: FireMapProps) {
         <InfoWindow
           position={selectedMember.location}
           onCloseClick={() => setSelectedMember(null)}
+          options={{
+             pixelOffset: new window.google.maps.Size(0, -20)
+          }}
         >
-          <div className="p-2 min-w-50">
-            <h3 className="font-bold text-lg border-b pb-1 mb-2">
+          <div className="p-1 min-w-50">
+            <h3 className="font-bold text-lg border-b border-gray-100 pb-1 mb-2 text-gray-900">
               {selectedMember.firstName} {selectedMember.lastName}
             </h3>
-            <div className="space-y-1 text-sm">
-              <p><span className="font-semibold">ID:</span> {selectedMember.fdIdNumber}</p>
-              <p><span className="font-semibold">Role:</span> {selectedMember.role.replace('_', ' ')}</p>
-              <p><span className="font-semibold">Cell:</span> <a href={`tel:${selectedMember.cellPhone}`} className="text-blue-600 hover:underline">{selectedMember.cellPhone}</a></p>
-              <p><span className="font-semibold">Address:</span> {selectedMember.addressLine1}</p>
-              <div className="mt-2 pt-2 border-t text-xs text-gray-500">
-                {selectedMember.qualifications.join(', ')}
-              </div>
+            <div className="space-y-1.5 text-sm text-gray-600">
+              <p><span className="font-semibold text-gray-800">ID:</span> {selectedMember.fdIdNumber}</p>
+              <p>
+                <span className="font-semibold text-gray-800">Role:</span>
+                <span className="ml-1 inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 capitalize">
+                  {selectedMember.role.replace(/_/g, ' ').toLowerCase()}
+                </span>
+              </p>
+              <p><span className="font-semibold text-gray-800">Cell:</span> <a href={`tel:${selectedMember.cellPhone}`} className="text-brand-red hover:underline">{selectedMember.cellPhone}</a></p>
+              <p className="text-xs text-gray-500 pt-1">{selectedMember.addressLine1}</p>
+
+              {selectedMember.qualifications.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-1">
+                  {selectedMember.qualifications.map((q, idx) => (
+                    <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-100">
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </InfoWindow>
