@@ -35,8 +35,10 @@ export default async function Home() {
     fdIdNumber: m.fdIdNumber,
     cellPhone: m.cellPhone,
     addressLine1: m.addressLine1,
+    addressLine2: m.addressLine2,
     city: m.city,
     state: m.state,
+    zipCode: m.zipCode,
     // Cast Prisma enum to Local enum using 'unknown' as intermediate step
     status: m.status as unknown as ActivityStatus,
     role: m.role as unknown as MemberRole,

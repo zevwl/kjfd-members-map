@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { redirect } from 'next/navigation';
-import { UserRole } from '@/types';
+import { UserRole, Member, ActivityStatus, MemberRole } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { Clock } from 'lucide-react';
 import MembersManager from '@/components/members/MembersManager';
@@ -17,7 +17,7 @@ export default async function MembersPage() {
   const userRole = (session.user as User).role as UserRole | null | undefined;
 
   // 1. Handle Pending Users (No Role)
-  if (!userRole) {
+  if (!userRole || userRole === UserRole.NONE) {
     return (
       <div className="flex h-full items-center justify-center p-6 bg-gray-50">
         <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
@@ -42,11 +42,26 @@ export default async function MembersPage() {
     include: { qualifications: true }
   });
 
-  // Convert dates/decimals to simple types for client component if needed
-  // Prisma decimals/dates can sometimes cause serialization warnings in Client Components
-  // For now, passing directly assuming simple types match.
-  // If JSON serialization error occurs, we map it here.
-  const members = JSON.parse(JSON.stringify(rawMembers));
+  // Map to frontend Member type to ensure consistent shape (flattening qualifications)
+  const members: Member[] = rawMembers.map(m => ({
+    id: m.id,
+    firstName: m.firstName,
+    lastName: m.lastName,
+    fdIdNumber: m.fdIdNumber,
+    cellPhone: m.cellPhone,
+    addressLine1: m.addressLine1,
+    addressLine2: m.addressLine2, // Mapped here
+    city: m.city,
+    state: m.state,
+    zipCode: m.zipCode,
+    status: m.status as unknown as ActivityStatus,
+    role: m.role as unknown as MemberRole,
+    location: {
+      lat: m.lat ?? 0,
+      lng: m.lng ?? 0
+    },
+    qualifications: m.qualifications.map(q => q.name)
+  }));
 
   return (
     <div className="h-full w-full overflow-y-auto p-4 md:p-6 bg-gray-50">

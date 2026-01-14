@@ -14,9 +14,9 @@ const defaultCenter = {
   lng: -74.168008,
 };
 
-// SVG Path for a Fire Helmet (Side Profile View)
-// Facing Right: Long rear brim on left, Shield holder on right
-const HELMET_SVG_PATH = "M22,15 L21,15 L21,10 C19.5,7.5 17,6 14,6 C9,6 5,10 5,15 L1,15 L1,17 L22,17 Z";
+// SVG Path for a Fire Helmet (Side Profile View) with a pointer at the bottom
+// Added a triangle (L10,17 L12,22 L14,17) to create a visual tip pointing to the map location
+const HELMET_SVG_PATH = "M22,15 L21,15 L21,10 C19.5,7.5 17,6 14,6 C9,6 5,10 5,15 L1,15 L1,17 L10,17 L12,22 L14,17 L22,17 Z";
 
 interface FireMapProps {
   members: Member[];
@@ -33,16 +33,9 @@ export default function FireMap({ members, enablePopups = false }: FireMapProps)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
-    // Fit bounds to show all members if list is not empty
-    if (members.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      members.forEach((member) => {
-        bounds.extend(member.location);
-      });
-      mapInstance.fitBounds(bounds);
-    }
+    // Auto-fit bounds logic removed to keep default center
     setMap(mapInstance);
-  }, [members]);
+  }, []);
 
   const onUnmount = useCallback(() => {
     setMap(null);
@@ -80,8 +73,8 @@ export default function FireMap({ members, enablePopups = false }: FireMapProps)
       strokeWeight: 1,
       strokeColor: strokeColor,
       scale: 1.5,
-      // Anchor the pin at the bottom center of the helmet (x=12, y=17)
-      anchor: new window.google.maps.Point(12, 17),
+      // Anchor the pin at the tip of the pointer (x=12, y=22) to ensure accuracy
+      anchor: new window.google.maps.Point(12, 22),
       // Position label text in the visual center of the helmet dome
       labelOrigin: new window.google.maps.Point(12, 12),
     };
@@ -138,7 +131,7 @@ export default function FireMap({ members, enablePopups = false }: FireMapProps)
           position={selectedMember.location}
           onCloseClick={() => setSelectedMember(null)}
           options={{
-             pixelOffset: new window.google.maps.Size(0, -20)
+             pixelOffset: new window.google.maps.Size(0, -25) // Adjusted offset for the new pointer
           }}
         >
           <div className="p-1 min-w-50">

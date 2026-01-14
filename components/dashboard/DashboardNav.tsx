@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import { UserRole } from '@/types';
 import type { User } from 'next-auth';
 import { Users, User as UserIcon, LogOut, Key } from 'lucide-react';
+import Image from 'next/image';
 
 interface DashboardNavProps {
   // User is optional now for public view
@@ -20,10 +21,14 @@ export default function DashboardNav({ user }: DashboardNavProps) {
       <div className="flex items-center gap-6">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-brand-red text-sm font-bold text-white shadow-sm ring-1 ring-white group-hover:bg-red-700 transition-colors">
-            FD
-          </div>
-          <span className="font-bold text-gray-900 text-lg tracking-tight hidden sm:block">FD Map</span>
+          <Image
+            src="/icon-512.png"
+            alt="Members Map Icon"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded object-cover shadow-sm ring-1 ring-gray-200"
+          />
+          <span className="font-bold text-gray-900 text-lg tracking-tight hidden sm:block">Members Map</span>
         </Link>
 
         {/* Members Link - Visible only for Managers and Admins */}

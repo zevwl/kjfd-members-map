@@ -43,8 +43,10 @@ export interface Member {
   fdIdNumber: string;
   cellPhone: string;
   addressLine1: string;
+  addressLine2?: string | null; // Added Address Line 2
   city: string;
   state: string;
+  zipCode: string;
   location: GeoLocation; // Derived from lat/lng in DB
   status: ActivityStatus;
   role: MemberRole;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Member, UserRole } from '@/types';
 import { Plus, Search, Edit2, Trash2, X } from 'lucide-react';
 import MemberForm from './MemberForm';
@@ -16,11 +16,18 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
 
-  // Simple client-side search for now
+  // Derive unique list of all existing qualifications for autocomplete
+  const availableQualifications = useMemo(() => {
+    const allQuals = initialMembers.flatMap(m => m.qualifications);
+    return Array.from(new Set(allQuals)).sort();
+  }, [initialMembers]);
+
+  // Simple client-side search
   const filteredMembers = initialMembers.filter((m) =>
     m.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.fdIdNumber.includes(searchTerm)
+    m.fdIdNumber.includes(searchTerm) ||
+    m.qualifications.some(q => q.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const canManage = userRole === UserRole.ADMIN || userRole === UserRole.MANAGER;
@@ -56,7 +63,7 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by name or ID..."
+              placeholder="Search by name, ID, or tag..."
               className="pl-9 pr-4 py-2 w-full border border-gray-300 rounded-md text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -83,6 +90,7 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID & Role</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Qualifications</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
                 {canManage && <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
@@ -91,7 +99,7 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No members match your search.
                   </td>
                 </tr>
@@ -101,7 +109,10 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-bold text-gray-900">{member.lastName}, {member.firstName}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{member.addressLine1}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {member.addressLine1}
+                          {member.addressLine2 && `, ${member.addressLine2}`}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -110,6 +121,19 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
                         <span className="inline-flex w-fit items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
                           {member.role.replace(/_/g, ' ')}
                         </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-50">
+                        {member.qualifications.length > 0 ? (
+                          member.qualifications.map((q, i) => (
+                            <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                              {q}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">None</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -154,11 +178,11 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
         </div>
       </div>
 
-      {/* Modal Overlay */}
+      {/* Modal Overlay - Updated for Scrolling */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="flex-none flex justify-between items-center p-4 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">
                 {editingMember ? 'Edit Member' : 'Add New Member'}
               </h3>
@@ -166,8 +190,12 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-4 bg-gray-50">
-              <MemberForm member={editingMember} onClose={handleCloseModal} />
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              <MemberForm
+                member={editingMember}
+                onClose={handleCloseModal}
+                availableQualifications={availableQualifications}
+              />
             </div>
           </div>
         </div>
