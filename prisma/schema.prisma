@@ -7,6 +7,52 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  role          UserRole  @default(NONE)
+  memberId      String?   @unique
+  approvedById  String?
+  approvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedBy    User?     @relation("UserApprovals", fields: [approvedById], references: [id])
+  approvedUsers User[]    @relation("UserApprovals")
+  member        Member?   @relation(fields: [memberId], references: [id])
+}
+
+model Member {
+  id                String          @id @default(uuid())
+  firstName         String
+  lastName          String
+  fdIdNumber        String          @unique
+  homePhone         String?
+  cellPhone         String
+  addressLine1      String
+  addressLine2      String?
+  city              String
+  state             String
+  zipCode           String
+  lat               Float?
+  lng               Float?
+  status            ActivityStatus
+  role              MemberRole
+  isInShabbosSystem Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  user              User?
+  qualifications    Qualification[] @relation("MemberToQualification")
+}
+
+model Qualification {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   Member[] @relation("MemberToQualification")
+}
+
 enum ActivityStatus {
   LOW
   REGULAR
@@ -27,69 +73,4 @@ enum UserRole {
   MANAGER
   MEMBER
   NONE
-}
-
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String?   // Optional for invited users until they accept
-  role          UserRole? // Null if not approved yet
-
-
-  // Relation to a specific Member profile
-  member       Member?   @relation(fields: [memberId], references: [id])
-  memberId     String?   @unique
-
-  // Approval Tracking (Self-relation to User)
-  approvedBy   User?     @relation("UserApprovals", fields: [approvedById], references: [id])
-  approvedById String?
-
-  // Users that *this* user has approved
-  approvedUsers User[]   @relation("UserApprovals")
-
-  approvedAt   DateTime?
-
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-}
-
-model Member {
-  id                String          @id @default(uuid())
-  firstName         String
-  lastName          String
-  fdIdNumber        String          @unique
-  homePhone         String?
-  cellPhone         String
-
-  // Structured Address
-  addressLine1      String
-  addressLine2      String?
-  city              String
-  state             String
-  zipCode           String
-
-  // Geocoded Location (Calculated from above fields)
-  lat               Float?
-  lng               Float?
-
-  status            ActivityStatus
-  role              MemberRole
-  isInShabbosSystem Boolean         @default(false)
-
-  // Relations
-  qualifications    Qualification[]
-  user              User?
-
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-}
-
-
-model Qualification {
-  id        String   @id @default(uuid())
-  name      String   @unique // e.g. "Ladder Truck Driver", "CPR"
-  members   Member[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

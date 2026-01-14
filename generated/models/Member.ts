@@ -324,8 +324,8 @@ export type MemberWhereInput = {
   isInShabbosSystem?: Prisma.BoolFilter<"Member"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
-  qualifications?: Prisma.QualificationListRelationFilter
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  qualifications?: Prisma.QualificationListRelationFilter
 }
 
 export type MemberOrderByWithRelationInput = {
@@ -347,8 +347,8 @@ export type MemberOrderByWithRelationInput = {
   isInShabbosSystem?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  qualifications?: Prisma.QualificationOrderByRelationAggregateInput
   user?: Prisma.UserOrderByWithRelationInput
+  qualifications?: Prisma.QualificationOrderByRelationAggregateInput
 }
 
 export type MemberWhereUniqueInput = Prisma.AtLeast<{
@@ -373,8 +373,8 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   isInShabbosSystem?: Prisma.BoolFilter<"Member"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
-  qualifications?: Prisma.QualificationListRelationFilter
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  qualifications?: Prisma.QualificationListRelationFilter
 }, "id" | "fdIdNumber">
 
 export type MemberOrderByWithAggregationInput = {
@@ -446,8 +446,8 @@ export type MemberCreateInput = {
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  qualifications?: Prisma.QualificationCreateNestedManyWithoutMembersInput
   user?: Prisma.UserCreateNestedOneWithoutMemberInput
+  qualifications?: Prisma.QualificationCreateNestedManyWithoutMembersInput
 }
 
 export type MemberUncheckedCreateInput = {
@@ -469,8 +469,8 @@ export type MemberUncheckedCreateInput = {
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  qualifications?: Prisma.QualificationUncheckedCreateNestedManyWithoutMembersInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutMemberInput
+  qualifications?: Prisma.QualificationUncheckedCreateNestedManyWithoutMembersInput
 }
 
 export type MemberUpdateInput = {
@@ -492,8 +492,8 @@ export type MemberUpdateInput = {
   isInShabbosSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  qualifications?: Prisma.QualificationUpdateManyWithoutMembersNestedInput
   user?: Prisma.UserUpdateOneWithoutMemberNestedInput
+  qualifications?: Prisma.QualificationUpdateManyWithoutMembersNestedInput
 }
 
 export type MemberUncheckedUpdateInput = {
@@ -515,8 +515,8 @@ export type MemberUncheckedUpdateInput = {
   isInShabbosSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  qualifications?: Prisma.QualificationUncheckedUpdateManyWithoutMembersNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutMemberNestedInput
+  qualifications?: Prisma.QualificationUncheckedUpdateManyWithoutMembersNestedInput
 }
 
 export type MemberCreateManyInput = {
@@ -1052,8 +1052,8 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   isInShabbosSystem?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  qualifications?: boolean | Prisma.Member$qualificationsArgs<ExtArgs>
   user?: boolean | Prisma.Member$userArgs<ExtArgs>
+  qualifications?: boolean | Prisma.Member$qualificationsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["member"]>
 
@@ -1122,8 +1122,8 @@ export type MemberSelectScalar = {
 
 export type MemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "fdIdNumber" | "homePhone" | "cellPhone" | "addressLine1" | "addressLine2" | "city" | "state" | "zipCode" | "lat" | "lng" | "status" | "role" | "isInShabbosSystem" | "createdAt" | "updatedAt", ExtArgs["result"]["member"]>
 export type MemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  qualifications?: boolean | Prisma.Member$qualificationsArgs<ExtArgs>
   user?: boolean | Prisma.Member$userArgs<ExtArgs>
+  qualifications?: boolean | Prisma.Member$qualificationsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1132,8 +1132,8 @@ export type MemberIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Member"
   objects: {
-    qualifications: Prisma.$QualificationPayload<ExtArgs>[]
     user: Prisma.$UserPayload<ExtArgs> | null
+    qualifications: Prisma.$QualificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1548,8 +1548,8 @@ readonly fields: MemberFieldRefs;
  */
 export interface Prisma__MemberClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  qualifications<T extends Prisma.Member$qualificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$qualificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QualificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user<T extends Prisma.Member$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  qualifications<T extends Prisma.Member$qualificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$qualificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QualificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1985,6 +1985,25 @@ export type MemberDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 /**
+ * Member.user
+ */
+export type Member$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
  * Member.qualifications
  */
 export type Member$qualificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2006,25 +2025,6 @@ export type Member$qualificationsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.QualificationScalarFieldEnum | Prisma.QualificationScalarFieldEnum[]
-}
-
-/**
- * Member.user
- */
-export type Member$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the User
-   */
-  select?: Prisma.UserSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the User
-   */
-  omit?: Prisma.UserOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserInclude<ExtArgs> | null
-  where?: Prisma.UserWhereInput
 }
 
 /**

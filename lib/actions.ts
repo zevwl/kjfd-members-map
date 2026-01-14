@@ -44,7 +44,6 @@ export async function signup(
       data: {
         email,
         passwordHash: hashedPassword,
-        role: null,
       },
     });
   } catch (error) {

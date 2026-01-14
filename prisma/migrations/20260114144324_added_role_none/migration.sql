@@ -6,7 +6,3 @@
 */
 -- AlterEnum
 ALTER TYPE "UserRole" ADD VALUE 'NONE';
-
--- AlterTable
-ALTER TABLE "User" ALTER COLUMN "role" SET NOT NULL,
-ALTER COLUMN "role" SET DEFAULT 'NONE';
