@@ -16,10 +16,19 @@ export enum MemberRole {
   DUTY_CREW = 'DUTY_CREW',
 }
 
+export interface AdminUserView {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  approvedBy?: { email: string } | null;
+};
+
 export enum UserRole {
   ADMIN = 'ADMIN',
   MANAGER = 'MANAGER',
   MEMBER = 'MEMBER',
+  NONE = 'NONE',
 }
 
 export interface GeoLocation {
