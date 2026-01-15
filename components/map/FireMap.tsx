@@ -76,7 +76,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
       // Anchor the pin at the tip of the pointer (x=12, y=22) to ensure accuracy
       anchor: new window.google.maps.Point(12, 22),
       // Position label text in the visual center of the helmet dome
-      labelOrigin: new window.google.maps.Point(12, 12),
+      labelOrigin: new window.google.maps.Point(13, 12),
     };
   }, []);
 
