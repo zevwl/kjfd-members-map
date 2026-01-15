@@ -61,7 +61,7 @@ export default function MemberLocationMap({ initialLat, initialLng, onLocationCh
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
       center={markerPosition}
-      zoom={15}
+      zoom={18}
       onLoad={onLoad}
       onUnmount={onUnmount}
       options={{
