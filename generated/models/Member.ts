@@ -441,8 +441,8 @@ export type MemberCreateInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -464,8 +464,8 @@ export type MemberUncheckedCreateInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -533,8 +533,8 @@ export type MemberCreateManyInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -758,8 +758,8 @@ export type MemberCreateWithoutUserInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -780,8 +780,8 @@ export type MemberUncheckedCreateWithoutUserInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -862,8 +862,8 @@ export type MemberCreateWithoutQualificationsInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -884,8 +884,8 @@ export type MemberUncheckedCreateWithoutQualificationsInput = {
   zipCode: string
   lat?: number | null
   lng?: number | null
-  status: $Enums.ActivityStatus
-  role: $Enums.MemberRole
+  status?: $Enums.ActivityStatus
+  role?: $Enums.MemberRole
   isInShabbosSystem?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string

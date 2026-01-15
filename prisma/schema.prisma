@@ -36,8 +36,8 @@ model Member {
   zipCode           String
   lat               Float?
   lng               Float?
-  status            ActivityStatus
-  role              MemberRole
+  status            ActivityStatus  @default(REGULAR)
+  role              MemberRole      @default(FULL_MEMBER)
   isInShabbosSystem Boolean         @default(false)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
