@@ -1,7 +1,7 @@
 import React from 'react';
 import FireMap from '@/components/map/FireMap';
 import { prisma } from '@/lib/prisma';
-import { Member, ActivityStatus, MemberRole } from '@/types'; // Import enums from types
+import { Member, ActivityStatus, MemberRole, UserRole } from '@/types'; // Import enums from types
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 
@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const isLoggedIn = !!session?.user;
+  const isLoggedIn = !!session?.user
+    && session.user.role
+    && session.user.role!== UserRole.NONE;
 
   // 1. Fetch members from DB with their qualifications
   const rawMembers = await prisma.member.findMany({
@@ -54,7 +56,7 @@ export default async function Home() {
     <div className="h-full w-full flex flex-col px-4 p-4 md:p-6">
        {/* Full screen map container with dashboard-like styling */}
       <div className="flex-1 w-full relative bg-white overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-        <FireMap members={members} enablePopups={isLoggedIn} />
+        <FireMap members={members} isLoggedIn={isLoggedIn} />
 
         {/* Floating Controls */}
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur p-2 rounded shadow-md z-10 border border-gray-100">

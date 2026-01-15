@@ -20,10 +20,10 @@ const HELMET_SVG_PATH = "M22,15 L21,15 L21,10 C19.5,7.5 17,6 14,6 C9,6 5,10 5,15
 
 interface FireMapProps {
   members: Member[];
-  enablePopups?: boolean;
+  isLoggedIn?: boolean;
 }
 
-export default function FireMap({ members, enablePopups = false }: FireMapProps) {
+export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
@@ -81,10 +81,24 @@ export default function FireMap({ members, enablePopups = false }: FireMapProps)
   }, []);
 
   const handleMarkerClick = (member: Member) => {
-    if (enablePopups) {
+    if (isLoggedIn) {
       setSelectedMember(member);
     }
   };
+
+  const truncateByDecimalPlace = (value: number, numDecimalPlaces: number) =>
+  Math.trunc(value * Math.pow(10, numDecimalPlaces)) / Math.pow(10, numDecimalPlaces);
+
+  const truncateBy3DecimalPlaces = (value: number) => truncateByDecimalPlace(value, 3);
+
+
+  const getMemberLocation = (location: { lat: number; lng: number }): google.maps.LatLngLiteral => {
+    if (isLoggedIn){
+      return { lat: location.lat, lng: location.lng };
+    } else {
+      return { lat: truncateBy3DecimalPlaces(location.lat), lng: truncateBy3DecimalPlaces(location.lng) };
+    }
+  }
 
   if (!isLoaded) return <div className="h-full w-full flex items-center justify-center bg-gray-50 text-gray-500">Loading Map...</div>;
 
@@ -111,18 +125,18 @@ export default function FireMap({ members, enablePopups = false }: FireMapProps)
       {members.map((member) => (
         <Marker
           key={member.id}
-          position={member.location}
+          position={getMemberLocation(member.location)}
           title={`${member.firstName} ${member.lastName}`}
           icon={getPinIcon(member.role)}
-          label={{
+          label={isLoggedIn ? {
             text: member.fdIdNumber,
             color: '#000000',
             fontSize: '9px',
             fontWeight: 'bold',
-          }}
+          } : undefined}
           onClick={() => handleMarkerClick(member)}
           // Set clickable to false visually for users who can't interact, though onClick guard handles logic
-          clickable={enablePopups}
+          clickable={isLoggedIn}
         />
       ))}
 
