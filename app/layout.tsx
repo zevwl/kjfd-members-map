@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import DashboardNav from '@/components/dashboard/DashboardNav';
 import { UserRole } from '@/types';
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: 'FD Members Map',
@@ -33,6 +34,7 @@ export default async function RootLayout({
         <footer className="flex-none py-3 text-center text-xs text-gray-500 bg-white border-t border-gray-200">
           Project by <a href="https://landausoftware.com" target="_blank" rel="noopener noreferrer" className="font-bold text-gray-800 hover:text-brand-red transition-colors">Landau Software Inc.</a> • In Honor of all KJFD Members
         </footer>
+        <Analytics />
       </body>
     </html>
   );
