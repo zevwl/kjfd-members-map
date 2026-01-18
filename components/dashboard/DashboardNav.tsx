@@ -28,7 +28,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
             height={32}
             className="h-8 w-8 rounded object-cover shadow-sm ring-1 ring-gray-200"
           />
-          <span className="font-bold text-gray-900 text-lg tracking-tight hidden sm:block">Members Map</span>
+          <span className="font-bold text-gray-900 text-lg tracking-tight">Members Map</span>
         </Link>
 
         {/* Members Link - Visible only for Managers and Admins */}
