@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { Member, MemberRole } from '@/types';
-import { Filter, Users, X, Check, Search, Car, Footprints, Loader2, Siren } from 'lucide-react';
+import { Filter, Users, X, Check, Search, Car, Footprints, Loader2, Siren, Route, Timer } from 'lucide-react';
 
 // Libraries must be defined outside the component to prevent infinite reloading
 const LIBRARIES: ("places" | "geometry")[] = ["places", "geometry"];
@@ -16,6 +16,14 @@ const containerStyle = {
 const defaultCenter = {
   lat: 41.340992,
   lng: -74.168008,
+};
+
+// Approximate bounds for Kiryas Joel, NY area to bias search results
+const KJ_BOUNDS = {
+  north: 41.360,
+  south: 41.320,
+  west: -74.200,
+  east: -74.140,
 };
 
 const HELMET_SVG_PATH = "M22,15 L21,15 L21,10 C19.5,7.5 17,6 14,6 C9,6 5,10 5,15 L1,15 L1,17 L10,17 L12,22 L14,17 L22,17 Z";
@@ -53,8 +61,15 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
   const [targetLocation, setTargetLocation] = useState<google.maps.LatLngLiteral | null>(null);
   const [closestMembers, setClosestMembers] = useState<ClosestMemberResult[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [maxTravelTime, setMaxTravelTime] = useState(15);
+  const [isEditingTime, setIsEditingTime] = useState(false);
 
-  // Derive unique lists and counts (Same as before)
+  // Refs
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const polylinesRef = useRef<google.maps.Polyline[]>([]); // Track polyline instances
+
+  // Derive unique lists and counts
   const roleData = useMemo(() => {
     const roles = new Set(members.map(m => m.role));
     const counts: Record<string, number> = {};
@@ -99,6 +114,43 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
     });
   }, [members, searchTerm, roleFilters, qualFilters]);
 
+  // Ref to keep track of filtered members inside async callbacks/listeners
+  const filteredMembersRef = useRef(filteredMembers);
+  useEffect(() => {
+    filteredMembersRef.current = filteredMembers;
+  }, [filteredMembers]);
+
+  // Ref to keep track of maxTravelTime inside async callbacks/listeners
+  const maxTravelTimeRef = useRef(maxTravelTime);
+  useEffect(() => {
+    maxTravelTimeRef.current = maxTravelTime;
+  }, [maxTravelTime]);
+
+  // --- POLYLINE MANAGEMENT (IMPERATIVE) ---
+  useEffect(() => {
+    // 1. Clear existing polylines
+    polylinesRef.current.forEach(poly => poly.setMap(null));
+    polylinesRef.current = [];
+
+    // 2. If no data or no map, exit
+    if (!map || !targetLocation || closestMembers.length === 0) return;
+
+    // 3. Draw new polylines
+    closestMembers.forEach((res, i) => {
+        const line = new window.google.maps.Polyline({
+            path: [res.member.location, targetLocation],
+            geodesic: true,
+            strokeColor: i === 0 ? '#10b981' : '#6b7280', // Green for #1, gray for others
+            strokeOpacity: 0.5,
+            strokeWeight: 2,
+            map: map // Bind directly to map
+        });
+        polylinesRef.current.push(line);
+    });
+
+  }, [closestMembers, targetLocation, map]);
+
+
   const toggleRoleFilter = (role: string) => {
     setRoleFilters(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
@@ -112,47 +164,46 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
   };
 
   // --- DISPATCH LOGIC ---
-  const handleFindClosest = async () => {
-    if (!incidentAddress || !window.google) return;
-    setIsCalculating(true);
-    setClosestMembers([]);
-    setTargetLocation(null);
 
-    const geocoder = new window.google.maps.Geocoder();
+  // Core calculation function separated from Geocoding
+  // Wrapped in useCallback to be a stable dependency for useEffect
+  const calculateRoutes = useCallback(async (targetLiteral: google.maps.LatLngLiteral) => {
+    if (!window.google) return;
+
+    setIsCalculating(true);
+    setClosestMembers([]); // Clear previous lines immediately
+    setTargetLocation(targetLiteral); // Update target marker immediately
+
+    // Pan map to incident
+    map?.panTo(targetLiteral);
+    map?.setZoom(14);
+
     const matrixService = new window.google.maps.DistanceMatrixService();
+    const targetLoc = new window.google.maps.LatLng(targetLiteral.lat, targetLiteral.lng);
 
     try {
-      // 1. Geocode the input address
-      const geocodeResult = await geocoder.geocode({ address: incidentAddress });
-      if (!geocodeResult.results[0]) throw new Error('Address not found');
+      // 1. Optimization: Calculate linear distance to FILTERED members first
+      // Use ref to ensure we have latest filtered list inside async/listener scope
+      const membersToCheck = filteredMembersRef.current;
 
-      const targetLoc = geocodeResult.results[0].geometry.location;
-      const targetLiteral = { lat: targetLoc.lat(), lng: targetLoc.lng() };
-      setTargetLocation(targetLiteral);
-
-      // Pan map to incident
-      map?.panTo(targetLiteral);
-      map?.setZoom(14);
-
-      // 2. Optimization: Calculate linear distance to FILTERED members first
-      // NOTE: Using filteredMembers here instead of all members
-      const membersWithLinearDist = filteredMembers.map(m => {
+      const membersWithLinearDist = membersToCheck.map(m => {
         const memberLoc = new window.google.maps.LatLng(m.location.lat, m.location.lng);
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(memberLoc, targetLoc);
         return { ...m, linearDistance: distance };
       });
 
-      // Take top 10 closest by straight line to check for actual driving time
+      // Take top 20 closest by straight line to check for actual driving time
+      // Increased from 10 to 20 to account for potential filtering by travel time later
       const candidates = membersWithLinearDist
         .sort((a, b) => a.linearDistance - b.linearDistance)
-        .slice(0, 10);
+        .slice(0, 20);
 
       if (candidates.length === 0) {
         setIsCalculating(false);
         return;
       }
 
-      // 3. Get Driving Metrics
+      // 2. Get Driving Metrics
       const driveResponse = await matrixService.getDistanceMatrix({
         origins: candidates.map(c => c.location),
         destinations: [targetLiteral],
@@ -160,7 +211,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
         unitSystem: window.google.maps.UnitSystem.IMPERIAL,
       });
 
-      // 4. Get Walking Metrics
+      // 3. Get Walking Metrics
       const walkResponse = await matrixService.getDistanceMatrix({
         origins: candidates.map(c => c.location),
         destinations: [targetLiteral],
@@ -168,7 +219,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
         unitSystem: window.google.maps.UnitSystem.IMPERIAL,
       });
 
-      // 5. Combine and Sort
+      // 4. Combine and Sort
       const results: ClosestMemberResult[] = candidates.map((member, i) => {
         const driveElement = driveResponse.rows[i].elements[0];
         const walkElement = walkResponse.rows[i].elements[0];
@@ -188,14 +239,51 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
         };
       });
 
-      // Sort by Driving Duration and take top 5
-      const top5 = results.sort((a, b) => a.driving.durationValue - b.driving.durationValue).slice(0, 5);
+      // Filter by Max Travel Time and Sort
+      // Use ref here or state if we wanted recalculation on state change (but this function runs once per search)
+      // Since this function is triggered by an event, using ref is safer against stale closures if dependencies change
+      const maxSeconds = maxTravelTimeRef.current * 60;
+      const top5 = results
+        .filter(r => r.driving.durationValue <= maxSeconds)
+        .sort((a, b) => a.driving.durationValue - b.driving.durationValue)
+        .slice(0, 5);
+
       setClosestMembers(top5);
 
     } catch (error) {
-      console.error("Error finding closest members:", error);
-      alert("Could not find address or calculate routes.");
+      console.error("Error calculating routes:", error);
     } finally {
+      setIsCalculating(false);
+    }
+  }, [map]); // Dependency on map instance
+
+  // Manual Trigger (e.g., Enter key)
+  const handleFindClosest = async () => {
+    if (!incidentAddress || !window.google) return;
+
+    // Clear state before starting new search
+    setClosestMembers([]);
+    setTargetLocation(null);
+    setIsCalculating(true);
+
+    const geocoder = new window.google.maps.Geocoder();
+
+    try {
+      const geocodeResult = await geocoder.geocode({
+        address: incidentAddress,
+        componentRestrictions: { country: "us" },
+        bounds: KJ_BOUNDS // Bias towards KJ
+      });
+
+      if (!geocodeResult.results[0]) throw new Error('Address not found');
+
+      const targetLoc = geocodeResult.results[0].geometry.location;
+      const targetLiteral = { lat: targetLoc.lat(), lng: targetLoc.lng() };
+
+      calculateRoutes(targetLiteral);
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      alert("Could not find address.");
       setIsCalculating(false);
     }
   };
@@ -204,6 +292,9 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
     setIncidentAddress('');
     setTargetLocation(null);
     setClosestMembers([]);
+    // Reset map view to default
+    map?.panTo(defaultCenter);
+    map?.setZoom(13);
   };
 
   const handleResultClick = (member: Member) => {
@@ -213,6 +304,46 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
       setSelectedMember(member);
     }
   };
+
+  // Initialize Autocomplete
+  useEffect(() => {
+    if (isLoaded && isDispatchExpanded && inputRef.current && window.google) {
+      // Clear any existing listeners or instances attached to previous inputs
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+
+      // Always create a fresh instance when the panel opens/re-renders
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+        bounds: KJ_BOUNDS,
+        componentRestrictions: { country: "us" },
+        fields: ["geometry", "formatted_address", "name"],
+        strictBounds: false // Bias towards KJ, but allow nearby
+      });
+
+      autocompleteRef.current.addListener("place_changed", () => {
+        const place = autocompleteRef.current?.getPlace();
+
+        if (place && place.geometry && place.geometry.location) {
+          const address = place.formatted_address || place.name || "";
+          const location = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+
+          setIncidentAddress(address);
+          // Directly trigger calculation with the geometry from Autocomplete
+          calculateRoutes(location);
+        }
+      });
+
+      // Cleanup on unmount or dependency change
+      return () => {
+         if (autocompleteRef.current) {
+            window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+            autocompleteRef.current = null;
+         }
+      };
+    }
+  }, [isLoaded, isDispatchExpanded, calculateRoutes]); // Added calculateRoutes dependency
+
   // ----------------------
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
@@ -306,19 +437,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
           />
         )}
 
-        {/* Optional: Draw lines from closest members to target */}
-        {targetLocation && closestMembers.map((res, i) => (
-           <Polyline
-             key={`line-${i}`}
-             path={[res.member.location, targetLocation]}
-             options={{
-               strokeColor: i === 0 ? '#10b981' : '#6b7280', // Green for #1, gray for others
-               strokeOpacity: 0.5,
-               strokeWeight: 2,
-               geodesic: true,
-             }}
-           />
-        ))}
+        {/* Polylines are handled via useEffect now to ensure cleanup */}
 
         {selectedMember && (
           <InfoWindow
@@ -350,16 +469,16 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
         {isLoggedIn && (
           <>
             {/* --- DISPATCH BUTTON & PANEL --- */}
-            <div className="flex flex-col items-start gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-300 delay-75">
+            <div className="flex flex-col items-start gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-300">
                 {!isDispatchExpanded ? (
                     <button
                         onClick={() => { setIsDispatchExpanded(true); setIsFilterExpanded(false); }}
-                        className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-2 text-sm font-medium w-full"
+                        className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center justify-center relative w-10 h-10 group"
+                        title="Dispatch"
                     >
-                        <Siren className="w-4 h-4 text-red-600" />
-                        <span>Dispatch</span>
+                        <Siren className="w-5 h-5 text-red-600" />
                         {closestMembers.length > 0 && (
-                             <span className="flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-[9px] text-white ml-auto">
+                             <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-[9px] text-white border border-white">
                                 {closestMembers.length}
                              </span>
                         )}
@@ -375,13 +494,26 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                             </button>
                         </div>
 
-                         <div className="flex gap-1">
+                         <div className="flex gap-1 relative">
                             <input
+                                ref={inputRef}
                                 type="text"
                                 placeholder="Enter incident address..."
-                                className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 outline-none"
+                                className="flex-1 text-sm border border-gray-300 text-gray-800 rounded px-2 py-1.5 focus:border-blue-500 outline-none"
                                 value={incidentAddress}
-                                onChange={(e) => setIncidentAddress(e.target.value)}
+                                onChange={(e) => {
+                                  setIncidentAddress(e.target.value);
+                                  // Always clear artifacts when user modifies text manually
+                                  // This ensures "on second address" or "cleared" scenarios work perfectly
+                                  setTargetLocation(null);
+                                  setClosestMembers([]);
+
+                                  // If cleared completely, reset map view
+                                  if (e.target.value === '') {
+                                    map?.panTo(defaultCenter);
+                                    map?.setZoom(13);
+                                  }
+                                }}
                                 onKeyDown={(e) => e.key === 'Enter' && handleFindClosest()}
                             />
                             <button
@@ -391,6 +523,37 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                             >
                                 {isCalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                             </button>
+                        </div>
+
+                        {/* Max Travel Time - Discrete UI Below Input */}
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 pl-1">
+                                <Timer className="w-3 h-3" />
+                                <span>
+                                    Max <span
+                                        className="font-bold text-gray-600 cursor-pointer hover:text-blue-600 underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                        onClick={() => setIsEditingTime(!isEditingTime)}
+                                        title="Click to adjust max travel time"
+                                    >
+                                        {maxTravelTime}
+                                    </span> min travel
+                                </span>
+                            </div>
+
+                            {isEditingTime && (
+                                <div className="flex items-center gap-2 px-1 pt-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                                    <input
+                                        type="range"
+                                        min="5"
+                                        max="60"
+                                        step="5"
+                                        value={maxTravelTime}
+                                        onChange={(e) => setMaxTravelTime(Number(e.target.value))}
+                                        className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                    <span className="text-[10px] font-medium text-blue-600 w-6 text-right">{maxTravelTime}m</span>
+                                </div>
+                            )}
                         </div>
 
                         {closestMembers.length > 0 && (
@@ -415,14 +578,14 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                                                         {res.member.lastName}, {res.member.firstName}
                                                     </span>
                                                 </div>
-                                                <span className="text-blue-700 font-mono text-xs font-bold bg-white px-1.5 py-0.5 rounded border border-blue-200">
-                                                    {res.driving.duration}
+                                                <span className="flex items-center gap-1 text-blue-700 font-mono text-xs font-bold bg-white px-1.5 py-0.5 rounded border border-blue-200">
+                                                    <Car className="w-3 h-3" /> {res.driving.duration}
                                                 </span>
                                             </div>
 
                                             <div className="flex justify-between text-gray-500 text-[10px] border-t border-blue-100 pt-1 mt-1">
                                                 <span className="flex items-center gap-1" title="Driving">
-                                                    <Car className="w-3 h-3" /> {res.driving.distance}
+                                                    <Route className="w-3 h-3" /> {res.driving.distance}
                                                 </span>
                                                 <span className="flex items-center gap-1" title="Walking">
                                                     <Footprints className="w-3 h-3" /> {res.walking.duration}
@@ -442,16 +605,16 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
             </div>
 
             {/* --- FILTERS BUTTON & PANEL --- */}
-            <div className="flex flex-col items-start gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-300">
+            <div className="flex flex-col items-start gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-300 delay-75">
                 {!isFilterExpanded ? (
                 <button
                     onClick={() => { setIsFilterExpanded(true); setIsDispatchExpanded(false); }}
-                    className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-2 text-sm font-medium w-full"
+                    className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center justify-center relative w-10 h-10 group"
+                    title="Filters"
                 >
-                    <Filter className="w-4 h-4" />
-                    <span>Filters</span>
+                    <Filter className="w-5 h-5" />
                     {(roleFilters.length > 0 || qualFilters.length > 0 || searchTerm) && (
-                    <span className="flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-[9px] text-white ml-auto">
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-[9px] text-white border border-white">
                         {roleFilters.length + qualFilters.length + (searchTerm ? 1 : 0)}
                     </span>
                     )}
@@ -527,7 +690,12 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
 
                     {(roleFilters.length > 0 || qualFilters.length > 0 || searchTerm) && (
                     <button
-                        onClick={() => { setRoleFilters([]); setQualFilters([]); setSearchTerm(''); }}
+                        onClick={() => {
+                            setRoleFilters([]);
+                            setQualFilters([]);
+                            setSearchTerm('');
+                            handleClearDispatch();
+                        }}
                         className="w-full text-xs text-white bg-blue-600 hover:bg-blue-700 rounded py-1.5 font-medium transition-colors"
                     >
                         Reset All Filters
