@@ -24,8 +24,8 @@ export default async function RootLayout({
     : null;
 
   return (
-    <html lang="en">
-      <body className="antialiased h-dvh w-screen overflow-hidden flex flex-col bg-gray-50">
+    <html lang="en" className="bg-gray-50" style={{ colorScheme: 'light' }}>
+      <body className="antialiased h-dvh w-screen overflow-hidden flex flex-col bg-gray-50 text-gray-900">
         <DashboardNav user={user} />
         <main className="flex-1 relative overflow-hidden">
           {children}
