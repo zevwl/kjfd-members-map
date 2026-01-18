@@ -597,9 +597,11 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                             </div>
                         )}
 
-                        <div className="text-[10px] text-gray-400 italic text-center">
-                            Results based on currently active map filters
-                        </div>
+                        {(roleFilters.length > 0 || qualFilters.length > 0 || searchTerm) && (
+                          <div className="text-[10px] text-gray-400 italic text-center">
+                              Results based on currently active map filters
+                          </div>
+                        )}
                     </div>
                 )}
             </div>
