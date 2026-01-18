@@ -25,13 +25,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className="antialiased h-screen w-screen overflow-hidden flex flex-col bg-gray-50">
+      <body className="antialiased h-dvh w-screen overflow-hidden flex flex-col bg-gray-50">
         <DashboardNav user={user} />
         <main className="flex-1 relative overflow-hidden">
           {children}
         </main>
 
-        <footer className="flex-none py-3 text-center text-xs text-gray-500 bg-white border-t border-gray-200">
+        <footer className="flex-none py-3 text-center text-xs text-gray-500 bg-white border-t border-gray-200 safe-area-bottom">
           Project by <a href="https://landausoftware.com" target="_blank" rel="noopener noreferrer" className="font-bold text-gray-800 hover:text-brand-red transition-colors">Landau Software Inc.</a> • In Honor of all KJFD Members
         </footer>
         <Analytics />
