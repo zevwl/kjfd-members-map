@@ -108,14 +108,16 @@ export default function UsersManager({ users }: { users: AdminUserView[] }) {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        disabled={loadingId === user.id}
-                        className="text-gray-400 hover:text-red-600 disabled:opacity-50 transition-colors p-2 hover:bg-red-50 rounded-full"
-                        title="Delete User"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {user.role !== UserRole.ADMIN && (
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          disabled={loadingId === user.id}
+                          className="text-gray-400 hover:text-red-600 disabled:opacity-50 transition-colors p-2 hover:bg-red-50 rounded-full"
+                          title="Delete User"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
