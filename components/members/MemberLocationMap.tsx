@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { API_LOADER_OPTIONS } from '@/lib/google-maps';
 
 const mapContainerStyle = {
   width: '100%',
@@ -16,10 +17,7 @@ interface MemberLocationMapProps {
 }
 
 export default function MemberLocationMap({ initialLat, initialLng, onLocationChange }: MemberLocationMapProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script-picker',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
-  });
+  const { isLoaded } = useJsApiLoader(API_LOADER_OPTIONS);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markerPosition, setMarkerPosition] = useState({ lat: initialLat, lng: initialLng });

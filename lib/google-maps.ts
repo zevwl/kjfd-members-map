@@ -25,3 +25,11 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   }
   return null;
 }
+
+const LIBRARIES: ("places" | "geometry")[] = ["places", "geometry"];
+
+export const API_LOADER_OPTIONS = {
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
+    libraries: LIBRARIES,
+  }

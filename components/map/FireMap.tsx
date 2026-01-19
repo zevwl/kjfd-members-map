@@ -5,8 +5,7 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 import { Member, MemberRole } from '@/types';
 import { Filter, Users, X, Check, Search, Car, Footprints, Loader2, Siren, Route, Timer } from 'lucide-react';
 
-// Libraries must be defined outside the component to prevent infinite reloading
-const LIBRARIES: ("places" | "geometry")[] = ["places", "geometry"];
+import { API_LOADER_OPTIONS } from '@/lib/google-maps';
 
 const containerStyle = {
   width: '100%',
@@ -40,11 +39,7 @@ interface ClosestMemberResult {
 }
 
 export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
-    libraries: LIBRARIES,
-  });
+  const { isLoaded } = useJsApiLoader(API_LOADER_OPTIONS);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
