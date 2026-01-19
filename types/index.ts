@@ -51,4 +51,6 @@ export interface Member {
   status: ActivityStatus;
   role: MemberRole;
   qualifications: string[];
+  lat?: number;
+  lng?: number;
 }

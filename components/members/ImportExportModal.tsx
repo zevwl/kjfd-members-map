@@ -24,6 +24,8 @@ const DB_FIELDS: { label: string; value: DBField; required?: boolean }[] = [
   { label: 'state', value: 'state', required: true },
   { label: 'zipCode', value: 'zipCode', required: true},
   { label: 'Role', value: 'role' },
+  { label: 'Latitude', value: 'lat', required: false },
+  { label: 'Longitude', value: 'lng', required: false },
 ];
 
 export default function ImportExportModal({
@@ -60,9 +62,11 @@ export default function ImportExportModal({
       'state',
       'zipCode',
       'role',
+      'lat',
+      'lng',
     ];
     // Cast members to Record<string, unknown>[] for the generic CSV generator
-    const memberRecords = members as unknown as Record<string, unknown>[];
+    const memberRecords = members.map(m => ({...m, lat: m.location.lat, lng: m.location.lng})) as unknown as Record<string, unknown>[];
     const csvString = generateCSV(headers, memberRecords);
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -168,12 +172,14 @@ export default function ImportExportModal({
 
         // Type conversion
         if (dbField === 'latitude' || dbField === 'longitude') {
-          const num = parseFloat(value ?? '');
-          if (isNaN(num)) {
-            errors.push(`Row ${index + 1}: Invalid number for ${dbField}`);
-            hasError = true;
-          } else {
-            memberObj[dbField] = num;
+          if (value !== null && value !== '') {
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+              errors.push(`Row ${index + 1}: Invalid number for ${dbField}`);
+              hasError = true;
+            } else {
+              memberObj[dbField] = num;
+            }
           }
         } else {
           memberObj[dbField] = value;
@@ -373,7 +379,7 @@ export default function ImportExportModal({
                         disabled={isSubmitting}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                         >
-                        {isSubmitting ? 'Importing...' : 'Run Import'}
+                        {isSubmitting ? 'Importing... (Geocoding may take a moment)' : 'Run Import'}
                         </button>
                     )}
                   </div>

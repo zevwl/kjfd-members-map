@@ -156,6 +156,8 @@ const MemberSchema = z.object({
   zipCode: z.string().min(5, 'Zip Code is required'),
   role: z.enum(MemberRole).optional()  ,
   status: z.enum(ActivityStatus).optional(),
+  lat: z.number().nullable().optional(),
+  lng: z.number().nullable().optional(),
 });
 
 type MemberInput = z.infer<typeof MemberSchema>;
@@ -249,6 +251,13 @@ export async function bulkImportMembers(members: unknown[]) {
             });
 
             if(!existing) {
+                if (!(member.lat && member.lng)) {
+                  const coords = await getMemberCoordinates(`${member.addressLine1}, ${member.city}, ${member.state} ${member.zipCode}`);
+                  if (coords) {
+                    member.lat = coords.lat;
+                    member.lng = coords.lng;
+                  }
+                }
                 await tx.member.create({ data: member });
                 createdCount++;
             } else {
