@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Member, UserRole } from '@/types';
-import { Plus, Search, Edit2, Trash2, X, FileUp, MapPinCheckInside, MapPinOff } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, FileUp, MapPinCheckInside, MapPinOff } from 'lucide-react';
 import MemberForm from './MemberForm';
 import ImportExportModal from './ImportExportModal';
 import { deleteMember } from '@/lib/member-actions';
@@ -52,8 +52,6 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
 
   // Helper to check if member has valid location data
   const hasLocation = (member: Member) => {
-    console.log(member);
-    console.log(member.location);
     return member.location && member.location.lat !== 0  && member.location.lng !== 0;
   };
 
@@ -196,25 +194,11 @@ export default function MembersManager({ initialMembers, userRole }: MembersMana
 
       {/* Modal Overlay - Updated for Scrolling */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-            <div className="flex-none flex justify-between items-center p-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">
-                {editingMember ? 'Edit Member' : 'Add New Member'}
-              </h3>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              <MemberForm
-                member={editingMember}
-                onClose={handleCloseModal}
-                availableQualifications={availableQualifications}
-              />
-            </div>
-          </div>
-        </div>
+        <MemberForm
+          member={editingMember}
+          onClose={handleCloseModal}
+          availableQualifications={availableQualifications}
+        />
       )}
 
       {/* Import/Export Modal */}
