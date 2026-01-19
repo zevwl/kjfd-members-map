@@ -3,8 +3,8 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { Member, MemberRole } from '@/types';
-import { Filter, Users, X, Check, Search, Car, Footprints, Loader2, Siren, Route, Timer } from 'lucide-react';
-
+import { Filter, Users, X, Check, Search, Car, Footprints, Loader2, Siren, Route, Timer, MapPinHouse, Phone, Pencil } from 'lucide-react';
+import MemberForm from '../members/MemberForm';
 import { API_LOADER_OPTIONS } from '@/lib/google-maps';
 
 const containerStyle = {
@@ -43,6 +43,14 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Derive unique list of all existing qualifications for autocomplete
+  const availableQualifications = useMemo(() => {
+    const allQuals = members.flatMap(m => m.qualifications);
+    return Array.from(new Set(allQuals)).sort();
+  }, [members]);
+
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -441,8 +449,9 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
             options={{ pixelOffset: new window.google.maps.Size(0, -25) }}
           >
             <div className="p-1 min-w-50">
-              <h3 className="font-bold text-lg border-b border-gray-100 pb-1 mb-2 text-gray-900">
-                {selectedMember.firstName} {selectedMember.lastName}
+              <h3 className="font-bold text-lg border-b border-gray-100 pb-1 mb-2 text-gray-900 flex items-center justify-between group">
+                <span>{selectedMember.firstName} {selectedMember.lastName}</span>
+                <button onClick={() => setIsModalOpen(true)} className="pl-4 text-gray-500 invisible group-hover:visible"><Pencil className="w-4" /></button>
               </h3>
               <div className="space-y-1.5 text-sm text-gray-600">
                 <p><span className="font-semibold text-gray-800">ID:</span> {selectedMember.fdIdNumber}</p>
@@ -452,7 +461,8 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                     {selectedMember.role.replace(/_/g, ' ').toLowerCase()}
                   </span>
                 </p>
-                <p><span className="font-semibold text-gray-800">Cell:</span> <a href={`tel:${selectedMember.cellPhone}`} className="text-brand-red hover:underline">{selectedMember.cellPhone}</a></p>
+                <p className="flex items-center text-sm text-gray-600"><Phone className="w-4 h-4 mr-2"/> <a href={`tel:${selectedMember.cellPhone}`} className="text-brand-red hover:underline">{selectedMember.cellPhone}</a></p>
+                <p className="flex items-center text-sm text-gray-600"><MapPinHouse className="w-4 h-4 mr-2"/> {selectedMember.addressLine1} {selectedMember.addressLine2}</p>
               </div>
             </div>
           </InfoWindow>
@@ -471,12 +481,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                         className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center justify-center relative w-10 h-10 group"
                         title="Dispatch"
                     >
-                        <Siren className="w-5 h-5 text-red-600" />
-                        {closestMembers.length > 0 && (
-                             <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-[9px] text-white border border-white">
-                                {closestMembers.length}
-                             </span>
-                        )}
+                      <Siren className={`w-5 h-5 ${closestMembers.length > 0 ? 'text-red-600' : ''}`} />
                     </button>
                 ) : (
                     <div className="bg-white/95 backdrop-blur shadow-lg rounded-lg border border-gray-200 p-4 w-full space-y-4 max-h-[60vh] overflow-y-auto">
@@ -609,12 +614,7 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                     className="bg-white/95 backdrop-blur shadow-md rounded-md border border-gray-200 p-2 hover:bg-gray-50 text-gray-700 transition-colors flex items-center justify-center relative w-10 h-10 group"
                     title="Filters"
                 >
-                    <Filter className="w-5 h-5" />
-                    {(roleFilters.length > 0 || qualFilters.length > 0 || searchTerm) && (
-                    <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-[9px] text-white border border-white">
-                        {roleFilters.length + qualFilters.length + (searchTerm ? 1 : 0)}
-                    </span>
-                    )}
+                  <Filter className={`w-5 h-5 ${roleFilters.length > 0 || qualFilters.length > 0 || searchTerm ? 'text-blue-600' : ''}`} />
                 </button>
                 ) : (
                 <div className="bg-white/95 backdrop-blur shadow-lg rounded-lg border border-gray-200 p-4 w-full space-y-4 max-h-[60vh] overflow-y-auto">
@@ -627,9 +627,9 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">
+                    <div className="flex items-center text-xs text-gray-600">
                         <Users className="w-3 h-3" />
-                        <span className="font-medium">{filteredMembers.length} Active Pins</span>
+                        <span className="font-medium">&nbsp;{filteredMembers.length} Active Pins</span>
                     </div>
 
                     {/* Search Bar */}
@@ -704,6 +704,16 @@ export default function FireMap({ members, isLoggedIn = false }: FireMapProps) {
           </>
         )}
       </div>
+
+
+      {/* Member Modal Overlay */}
+      {isModalOpen && (
+        <MemberForm
+          member={selectedMember}
+          onClose={() => setIsModalOpen(false)}
+          availableQualifications={availableQualifications}
+        />
+      )}
     </div>
   );
 }
