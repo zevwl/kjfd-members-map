@@ -219,7 +219,6 @@ export default function ImportExportModal({
     setCsvFile(null);
     setCsvData([]);
     setImportResult(null);
-    onClose()
   };
 
   return (
@@ -227,7 +226,7 @@ export default function ImportExportModal({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b flex justify-between items-center">
           <h2 className="text-xl font-bold">Import / Export Members</h2>
-          <button onClick={resetImport} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             ✕
           </button>
         </div>
@@ -400,7 +399,7 @@ export default function ImportExportModal({
                       <p className="text-gray-600 mb-8">{importResult.message}</p>
                       <div className="flex justify-center gap-4">
                         <button
-                          onClick={resetImport}
+                          onClick={onClose}
                           className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition"
                         >
                           Close
@@ -439,7 +438,7 @@ export default function ImportExportModal({
 
                       <div className="flex justify-center gap-4">
                         <button
-                          onClick={resetImport}
+                          onClick={onClose}
                           className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition"
                         >
                           Close
