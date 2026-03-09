@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { UserRole } from '@/types';
 import type { User } from 'next-auth';
-import { Users, User as UserIcon, LogOut, Key } from 'lucide-react';
+import { Users, User as UserIcon, LogOut, Key, Settings } from 'lucide-react';
 import Image from 'next/image';
 
 interface DashboardNavProps {
@@ -66,13 +66,15 @@ export default function DashboardNav({ user }: DashboardNavProps) {
             {/* Fixed: Use padding-top (pt-2) instead of margin-top to bridge the hover gap */}
             <div className="absolute right-0 top-full pt-2 w-56 hidden group-hover:block z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="bg-white rounded-md shadow-lg py-1 border border-gray-200">
-                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
+                  <Link href="/profile" className="block px-4 py-3 border-b border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors group/header">
+                      <p className="text-sm font-semibold text-gray-900 truncate group-hover/header:text-brand-red">{user.email}</p>
                       <p className="text-xs text-gray-500 capitalize mt-0.5 font-medium">{user.role?.toLowerCase().replace('_', ' ')}</p>
-                  </div>
+                      <p className="text-xs text-brand-red mt-1 opacity-0 group-hover/header:opacity-100 transition-opacity">View Profile →</p>
+                  </Link>
 
                   {isAdmin && (
-                    <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-red">
+                    <Link href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-red">
+                      <Settings className="h-4 w-4" />
                       Admin Settings
                     </Link>
                   )}
